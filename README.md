@@ -8,14 +8,13 @@ The next tools are included in the box:
 
 * kind
 * docker
-* kubectl
+* kubectl (with autocomplete)
+* Helm
 
 The cluster created by kind will have an ingres controller (nginx) and a local docker registry.
-Also, in the nginx-app-example are the manifests required to deploy an application on top of kubernetes.
-
 
 ## Usage
-You can use the base box like any other base box. 
+You can use the base box like any other base box.
 
 1.Prerequisites:
 
@@ -23,7 +22,7 @@ Install [Vagrant](https://www.vagrantup.com/docs/installation) and [Virtualbox](
 
 2.Clone this repo:
 ```
-$ git clone git@github.com:galvarado/vagrant-box-bionic64-kind.git
+$ git clone https://github.com/santi-eidu/vagrant-box-bionic64-kind.git
 ```
 
 3.Create the box:
@@ -40,11 +39,36 @@ $ vagrant ssh
 
 ```
 $ kubectl cluster-info
-Kubernetes master is running at https://127.0.0.1:46157
-KubeDNS is running at https://127.0.0.1:46157/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://127.0.0.1:36677
+KubeDNS is running at https://127.0.0.1:36677/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ```
 
 Ready to shine! You are ready to deploy applications on kubernetes.
 
+Ingress example:
+
+```
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: nginx-app.192.168.50.4.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+
+```
