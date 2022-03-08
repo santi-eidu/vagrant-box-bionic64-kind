@@ -15,6 +15,9 @@ fi
 cat <<EOF | kind create cluster --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  disableDefaultCNI: true # disable kindnet
+  podSubnet: 192.170.0.0/16 # set to Calico's default subnet
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${reg_port}"]
@@ -34,8 +37,6 @@ nodes:
   - containerPort: 443
     hostPort: 443
     protocol: TCP
-- role: worker
-- role: worker
 - role: worker
 EOF
 
@@ -62,4 +63,24 @@ mkdir .kube
 kind get kubeconfig > .kube/config
 # Create nginx-ingress controller
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
+kubectl apply -f  https://docs.projectcalico.org/manifests/calico.yaml
+sleep 30
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml
+kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
+sleep 30
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: metallb-system
+  name: config
+data:
+  config: |
+    address-pools:
+    - name: default
+      protocol: layer2
+      addresses:
+      - 172.18.255.200-172.18.255.250
+EOF
 echo "**** Cluster started :) Ready to shine!"

@@ -15,13 +15,13 @@ Vagrant.configure("2") do |config|
   config.vm.box = "hashicorp/bionic64"
   config.vm.network "private_network", ip: "192.168.50.4"
   config.vm.hostname = "myk8s"
-  #config.vm.network "forwarded_port", guest: 80, host: 80
+  config.vm.network "forwarded_port", guest: 40077, host: 40077
   config.vm.provision :shell, path: "bootstrap.sh"
   config.vm.provision :shell, path: "kind_cluster_with_localregistry.sh"
 
   config.vm.provider "virtualbox" do |v|
-    v.memory = 8192
-    v.cpus = 4
+    v.memory = 4200 
+    v.cpus = 3
     v.name = "myk8s"
   end
   # Disable automatic box update checking. If you disable this, then
